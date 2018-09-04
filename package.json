@@ -1,0 +1,20 @@
+{
+  "name": "kfotzli-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Shir Brunner",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "lodash": "^4.17.10",
+    "ms": "^2.1.1",
+    "uuid": "^3.3.2",
+    "websocket": "^1.0.26"
+  }
+}
