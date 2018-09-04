@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const config = require('../../config');
+const Game = require('../game');
 
 module.exports = class Room {
     constructor(level, characters) {
@@ -82,10 +83,11 @@ module.exports = class Room {
     _setTimeout() {
         clearTimeout(this._timeout);
         if(this._clients.length >= 2)
-            this._timeout = setTimeout(this._startGame, config.roomTimeout);
+            this._timeout = setTimeout(() => this._startGame(), config.roomTimeout);
     }
 
     _startGame() {
-        console.log('game should now be started');
+        let game = new Game(this._level, this._clients);
+        game.start();
     }
 };
