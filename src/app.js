@@ -14,10 +14,8 @@ let wsServer = new WebSocketServer({ httpServer: httpServer });
 wsServer.on('request', request => {
     let connection = request.accept(null, request.origin);
     let client = new Client(connection);
-    client.on('message', message => {
-        if(message.type === 'FIND_ROOM') {
-            _.assign(client, _.pick(message.body.client, ['name']));
-            reception.findRoom(client);
-        }
+    client.on('message.CLIENT_DETAILS', message => {
+        _.assign(client, _.pick(message.client, ['name']));
+        reception.findRoom(client);
     });
 });

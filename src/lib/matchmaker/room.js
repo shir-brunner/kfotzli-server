@@ -10,6 +10,8 @@ module.exports = class Room {
         this._characters = characters;
         this._timeout = null;
         this._roomTimeout = config.roomTimeout;
+        this._isAvailable = true;
+        this._gameStarted = false;
     }
 
     addClient(client) {
@@ -23,21 +25,21 @@ module.exports = class Room {
         console.log(`Client "${client.name}" joined the room at slot ${client.slot}`);
 
         this._setTimeout();
-        this.notifyClients();
+        this._syncClients();
     }
 
     isAvailable() {
-        return this._clients.length < this._maxPlayers;
+        return this._clients.length < this._maxPlayers && this._isAvailable;
     }
 
-    notifyClients() {
+    _syncClients(messageType) {
         let room = this.toObject();
         this._clients.forEach(client => {
             room.clients.forEach(roomClient => {
                 roomClient.isLocal = roomClient.id === client.id;
             });
 
-            client.send('ROOM', room);
+            client.send(messageType || 'ROOM', room);
         });
     }
 
@@ -75,18 +77,45 @@ module.exports = class Room {
     }
 
     removeClient(client) {
+        if(this._gameStarted)
+            return;
+
         this._clients = this._clients.filter(roomClient => roomClient.id !== client.id);
         this._setTimeout();
-        this.notifyClients();
+        this._syncClients();
     }
 
     _setTimeout() {
         clearTimeout(this._timeout);
         if(this._clients.length >= 2)
-            this._timeout = setTimeout(() => this._startGame(), config.roomTimeout);
+            this._timeout = setTimeout(() => this._prepareClients(), config.roomTimeout);
+    }
+
+    _prepareClients() {
+        console.log('Making sure all clients are ready');
+
+        this._isAvailable = false;
+        this._syncClients('PREPARE');
+
+        this._clients.forEach(client => {
+            client.on('message.READY', () => {
+                client.isReady = true;
+                if(_.every(this._clients, client => client.isReady))
+                    this._startGame();
+            });
+        });
     }
 
     _startGame() {
+        if(this._gameStarted)
+            return;
+
+        console.log(`Starting game for clients: ${this._clients.map(client => `"${client.name}"`).join(', ')}`);
+
+        this._gameStarted = true;
+        this._syncClients('GAME_STARTED');
+
+        this._clients.forEach(client => client.off());
         let game = new Game(this._level, this._clients);
         game.start();
     }
