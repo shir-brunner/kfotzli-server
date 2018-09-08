@@ -1,47 +1,59 @@
 const config = require('../../config');
 const Loop = require('../../utils/loop');
 const Physics = require('../../../../client/src/game/engine/physics');
+const GameState = require('../../../../client/src/game/engine/game_state');
+const _ = require('lodash');
+const FRAME_RATE = Math.round(1000 / config.fps);
+const chalk = require('chalk');
 
 module.exports = class Game {
     constructor(level, clients) {
-        //this.gameState = this._createGameState(level, clients);
-        //this.physics = new Physics(this.gameState);
+        this.gameState = GameState.create(level, clients.map(client => client.toObject()));
+        this.physics = new Physics(this.gameState);
         this.clients = clients;
-    }
-
-    _createGameState(level, clients) {
-        return new GameState({
-            players: clients.map((client, index) => {
-                let spawnPoint = level.spawnPoints[index];
-                let playerParams = client.character;
-                playerParams.x = spawnPoint.x;
-                playerParams.y = spawnPoint.y - client.character.height + config.squareSize;
-                _.assign(playerParams, _.omit(client, ['name']));
-                return new Player(playerParams);
-            }),
-            gameObjects: level.gameObjects.map(gameObject => new GameObject(gameObject))
-        });
+        this.ticks = 0;
+        this.gameTime = 0;
+        this.absoluteStartTime = Date.now();
     }
 
     start() {
         this.clients.forEach(client => client.on('close', () => this._removeClient(client)));
 
         let networkLoop = new Loop(this._networkLoop.bind(this), 500);
-        let physicsLoop = new Loop(this._physicsLoop.bind(this), 1000 / config.fps);
+        let physicsLoop = new Loop(this._physicsLoop.bind(this), FRAME_RATE);
 
         networkLoop.start();
         physicsLoop.start();
     }
 
-    _networkLoop(delta) {
-        console.log('network loooping..');
+    _networkLoop() {
+        let sharedState = this.gameState.getSharedState(this.ticks);
+        this.clients.forEach(client => client.send('SHARED_STATE', sharedState));
     }
 
-    _physicsLoop(delta) {
-        console.log('physics loooping..');
+    _physicsLoop(deltaTime) {
+        let actualGameTime = Date.now() - this.absoluteStartTime;
+        let deltaFrames = deltaTime / FRAME_RATE;
+        while (deltaFrames > 0) {
+            if (deltaFrames >= 1) {
+                this.physics.update(1, this.gameTime);
+                this.gameTime += FRAME_RATE;
+            } else {
+                this.physics.update(deltaFrames, this.gameTime);
+                this.gameTime += deltaFrames * FRAME_RATE;
+            }
+            deltaFrames--;
+        }
+
+        if (config.debug.stopGameAfter && actualGameTime >= config.debug.stopGameAfter) {
+            console.log(`Game has been stopped for debugging after ${config.debug.stopGameAfter / 1000} seconds`);
+            console.log(`actualGameTime: ${actualGameTime}`);
+            console.log(`gameTime: ${this.gameTime}`);
+            process.exit();
+        }
     }
 
     _removeClient(client) {
-        console.log('TODO: remove client ' + client.name);
+        console.log('TODO: remove client "' + client.name + '" from game because he left');
     }
 };

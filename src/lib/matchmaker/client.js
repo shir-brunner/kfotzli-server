@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const uuid = require('uuid');
+const config = require('../../config');
 
 module.exports = class Client {
     constructor(connection) {
@@ -11,10 +12,17 @@ module.exports = class Client {
         this._connection = connection;
         this._messageHandlers = {};
         this._connection.on('message', params => {
-            let message = JSON.parse(params.utf8Data);
-            if(this._messageHandlers[message.type])
-                this._messageHandlers[message.type](message.body);
+            if(config.debug.latency)
+                setTimeout(() => this._handleMessage(params), config.debug.latency);
+            else
+                this._handleMessage(params);
         });
+    }
+
+    _handleMessage(params) {
+        let message = JSON.parse(params.utf8Data);
+        if(this._messageHandlers[message.type])
+            this._messageHandlers[message.type](message.body);
     }
 
     on(eventName, callback) {
@@ -30,16 +38,26 @@ module.exports = class Client {
         if (_.startsWith(eventName, 'message'))
             delete this._messageHandlers[eventName.slice('message.'.length)];
 
+        if(!eventName)
+            this._messageHandlers = {};
+
         return this;
     }
 
     send(messageType, data) {
+        if(config.debug.latency)
+            setTimeout(() => this._send(messageType, data), config.debug.latency);
+        else
+            this._send(messageType, data);
+
+        return this;
+    }
+
+    _send(messageType, data) {
         this._connection.send(JSON.stringify({
             type: messageType,
             body: data
         }));
-
-        return this;
     }
 
     toObject() {

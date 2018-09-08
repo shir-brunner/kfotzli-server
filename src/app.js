@@ -4,8 +4,11 @@ const config = require('./config');
 const reception = require('./lib/matchmaker/reception');
 const Client = require('./lib/matchmaker/client');
 const _ = require('lodash');
+const moment = require('moment');
+const chalk = require('chalk');
 
-let httpServer = http.createServer((request, response) => {});
+let httpServer = http.createServer((request, response) => {
+});
 httpServer.listen(config.port, () => {
     console.log(`KfotzLi socket server is listening on port ${config.port}`);
 });
@@ -19,3 +22,10 @@ wsServer.on('request', request => {
         reception.findRoom(client);
     });
 });
+
+console.logCopy = console.log.bind(console);
+console.log = function () {
+    arguments[0] = chalk.blue(arguments[0]);
+    arguments[1] = chalk.magenta(arguments[1]);
+    this.logCopy(moment().format('YYYY-MM-DD HH:mm:ss') + ':', ...arguments);
+};

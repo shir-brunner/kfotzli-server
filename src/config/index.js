@@ -6,4 +6,8 @@ module.exports = {
     roomTimeout: ms('1 seconds'),
     fps: 30,
     squareSize: 100,
+    debug: {
+        latency: 100,
+        stopGameAfter: ms('10 seconds')
+    }
 };

@@ -4,19 +4,21 @@ const hrtimeMs = function() {
 };
 
 module.exports = class Loop {
-    constructor(func, interval) {
-        this._tick = 0;
-        this._previous = hrtimeMs();
-        this._interval = interval;
+    constructor(func, frameRate) {
+        this._lastTimestamp = Date.now();
+        this._frameRate = frameRate;
         this.func = func;
     }
 
     start() {
-        setTimeout(() => this.start(), this._interval);
-        let now = hrtimeMs();
-        let delta = now - this._previous;
-        this.func(delta / this._interval);
-        this._previous = now;
-        this._tick++;
+        let now = Date.now();
+        let deltaTime = now - this._lastTimestamp;
+
+        if(deltaTime > this._frameRate) {
+            this.func(deltaTime);
+            this._lastTimestamp = now;
+        }
+
+        setTimeout(() => this.start(), this._frameRate);
     }
 };

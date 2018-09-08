@@ -77,7 +77,7 @@ module.exports = class Room {
     }
 
     removeClient(client) {
-        if(this._gameStarted)
+        if (this._gameStarted)
             return;
 
         this._clients = this._clients.filter(roomClient => roomClient.id !== client.id);
@@ -87,7 +87,7 @@ module.exports = class Room {
 
     _setTimeout() {
         clearTimeout(this._timeout);
-        if(this._clients.length >= 2)
+        if (this._clients.length >= this._level.minPlayers)
             this._timeout = setTimeout(() => this._prepareClients(), config.roomTimeout);
     }
 
@@ -98,16 +98,17 @@ module.exports = class Room {
         this._syncClients('PREPARE');
 
         this._clients.forEach(client => {
+            client.on('message.PING', () => client.send('PONG'));
             client.on('message.READY', () => {
                 client.isReady = true;
-                if(_.every(this._clients, client => client.isReady))
+                if (_.every(this._clients, client => client.isReady))
                     this._startGame();
             });
         });
     }
 
     _startGame() {
-        if(this._gameStarted)
+        if (this._gameStarted)
             return;
 
         console.log(`Starting game for clients: ${this._clients.map(client => `"${client.name}"`).join(', ')}`);
