@@ -24,7 +24,7 @@ module.exports = class Room {
 
         console.log(`Client "${client.name}" joined the room at slot ${client.slot}`);
 
-        this._setTimeout();
+        this._extendTimeout();
         this._syncClients();
     }
 
@@ -35,11 +35,12 @@ module.exports = class Room {
     _syncClients(messageType) {
         let room = this.toObject();
         this._clients.forEach(client => {
-            room.clients.forEach(roomClient => {
+            let clonedRoom = _.cloneDeep(room);
+            clonedRoom.clients.forEach(roomClient => {
                 roomClient.isLocal = roomClient.id === client.id;
             });
 
-            client.send(messageType || 'ROOM', room);
+            client.send(messageType || 'ROOM', clonedRoom);
         });
     }
 
@@ -81,11 +82,11 @@ module.exports = class Room {
             return;
 
         this._clients = this._clients.filter(roomClient => roomClient.id !== client.id);
-        this._setTimeout();
+        this._extendTimeout();
         this._syncClients();
     }
 
-    _setTimeout() {
+    _extendTimeout() {
         clearTimeout(this._timeout);
         if (this._clients.length >= this._level.minPlayers)
             this._timeout = setTimeout(() => this._prepareClients(), config.roomTimeout);

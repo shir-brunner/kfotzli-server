@@ -11,7 +11,6 @@ module.exports = class Game {
         this.gameState = GameState.create(level, clients.map(client => client.toObject()));
         this.physics = new Physics(this.gameState);
         this.clients = clients;
-        this.ticks = 0;
         this.gameTime = 0;
         this.absoluteStartTime = Date.now();
     }
@@ -19,7 +18,7 @@ module.exports = class Game {
     start() {
         this.clients.forEach(client => client.on('close', () => this._removeClient(client)));
 
-        let networkLoop = new Loop(this._networkLoop.bind(this), 500);
+        let networkLoop = new Loop(this._networkLoop.bind(this), config.networkLoopInterval);
         let physicsLoop = new Loop(this._physicsLoop.bind(this), FRAME_RATE);
 
         networkLoop.start();
@@ -27,7 +26,7 @@ module.exports = class Game {
     }
 
     _networkLoop() {
-        let sharedState = this.gameState.getSharedState(this.ticks);
+        let sharedState = this.gameState.getSharedState(this.gameTime);
         this.clients.forEach(client => client.send('SHARED_STATE', sharedState));
     }
 
