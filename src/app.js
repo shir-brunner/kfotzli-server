@@ -25,7 +25,5 @@ wsServer.on('request', request => {
 
 console.logCopy = console.log.bind(console);
 console.log = function () {
-    arguments[0] = chalk.blue(arguments[0]);
-    arguments[1] = chalk.magenta(arguments[1]);
     this.logCopy(moment().format('YYYY-MM-DD HH:mm:ss') + ':', ...arguments);
 };
