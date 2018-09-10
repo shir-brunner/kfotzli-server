@@ -30,8 +30,11 @@ module.exports = class Game {
     }
 
     _networkLoop() {
-        let sharedState = this.gameState.getSharedState(this.gameTime);
-        this.clients.forEach(client => client.send('SHARED_STATE', sharedState));
+        if(this.inputHandler.hasChanged) {
+            let sharedState = this.gameState.getSharedState(this.gameTime);
+            this.clients.forEach(client => client.send('SHARED_STATE', sharedState));
+            this.inputHandler.hasChanged = false;
+        }
     }
 
     _physicsLoop(deltaTime) {

@@ -5,7 +5,6 @@ const reception = require('./lib/matchmaker/reception');
 const Client = require('./lib/matchmaker/client');
 const _ = require('lodash');
 const moment = require('moment');
-const chalk = require('chalk');
 
 let httpServer = http.createServer((request, response) => {
 });
