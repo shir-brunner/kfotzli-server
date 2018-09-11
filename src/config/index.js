@@ -6,6 +6,6 @@ module.exports = {
     roomTimeout: ms('1 seconds'),
     fps: 30,
     debug: {
-        latency: 1,
+        latency: 200,
     }
 };

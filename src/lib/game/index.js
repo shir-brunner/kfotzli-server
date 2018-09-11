@@ -18,14 +18,7 @@ module.exports = class Game {
 
     start() {
         this.clients.forEach(client => {
-            client.on('message.INPUT', input => {
-                if(input.isPressed) {
-                    console.log('-----------------------');
-                    console.log('received input at gameTime: ' + this.gameTime);
-                    console.log('playerX is: ' + this.gameState.players[0].x);
-                }
-                this.inputHandler.handle(input, client)
-            });
+            client.on('message.INPUT', input => this.inputHandler.handle(input, client));
             client.on('close', () => this._removeClient(client));
         });
 
@@ -50,7 +43,7 @@ module.exports = class Game {
     }
 
     _networkLoop() {
-        if(this.inputHandler.hasChanged) {
+        if (this.inputHandler.hasChanged) {
             let sharedState = this.gameState.getSharedState(this.gameTime);
             sharedState.gameTime = Date.now() - this.startTime;
             this.clients.forEach(client => client.send('SHARED_STATE', sharedState));
