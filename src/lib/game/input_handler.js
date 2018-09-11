@@ -11,6 +11,7 @@ module.exports = class InputHandler {
 
     handle(input, client) {
         let player = this.gameState.players.find(player => player.id === client.id);
+
         switch(input.keyCode) {
             case LEFT_KEY:
                 player.controller.isLeftPressed = input.isPressed;

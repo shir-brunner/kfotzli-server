@@ -13,49 +13,48 @@ module.exports = class Game {
         this.inputHandler = new InputHandler(this.gameState);
         this.clients = clients;
         this.gameTime = 0;
-        this.absoluteStartTime = Date.now();
+        this.startTime = Date.now();
     }
 
     start() {
         this.clients.forEach(client => {
-            client.on('message.INPUT', input => this.inputHandler.handle(input, client));
+            client.on('message.INPUT', input => {
+                if(input.isPressed) {
+                    console.log('-----------------------');
+                    console.log('received input at gameTime: ' + this.gameTime);
+                    console.log('playerX is: ' + this.gameState.players[0].x);
+                }
+                this.inputHandler.handle(input, client)
+            });
             client.on('close', () => this._removeClient(client));
         });
 
-        let networkLoop = new Loop(this._networkLoop.bind(this), config.networkLoopInterval);
         let physicsLoop = new Loop(this._physicsLoop.bind(this), FRAME_RATE);
-
-        networkLoop.start();
         physicsLoop.start();
+    }
+
+    _physicsLoop(deltaTime) {
+        let deltaFrames = deltaTime / FRAME_RATE;
+        while (deltaFrames > 0) {
+            if (deltaFrames >= 1) {
+                this.gameTime += FRAME_RATE;
+                this.physics.update(1, this.gameTime);
+            } else {
+                this.gameTime += deltaFrames * FRAME_RATE;
+                this.physics.update(deltaFrames, this.gameTime);
+            }
+            deltaFrames--;
+        }
+
+        this._networkLoop();
     }
 
     _networkLoop() {
         if(this.inputHandler.hasChanged) {
             let sharedState = this.gameState.getSharedState(this.gameTime);
+            sharedState.gameTime = Date.now() - this.startTime;
             this.clients.forEach(client => client.send('SHARED_STATE', sharedState));
             this.inputHandler.hasChanged = false;
-        }
-    }
-
-    _physicsLoop(deltaTime) {
-        let actualGameTime = Date.now() - this.absoluteStartTime;
-        let deltaFrames = deltaTime / FRAME_RATE;
-        while (deltaFrames > 0) {
-            if (deltaFrames >= 1) {
-                this.physics.update(1, this.gameTime);
-                this.gameTime += FRAME_RATE;
-            } else {
-                this.physics.update(deltaFrames, this.gameTime);
-                this.gameTime += deltaFrames * FRAME_RATE;
-            }
-            deltaFrames--;
-        }
-
-        if (config.debug.stopGameAfter && actualGameTime >= config.debug.stopGameAfter) {
-            console.log(`Game has been stopped for debugging after ${config.debug.stopGameAfter / 1000} seconds`);
-            console.log(`actualGameTime: ${actualGameTime}`);
-            console.log(`gameTime: ${this.gameTime}`);
-            process.exit();
         }
     }
 
