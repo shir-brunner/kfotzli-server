@@ -6,7 +6,6 @@ const DOWN_KEY = 40;
 module.exports = class InputHandler {
     constructor(gameState) {
         this.gameState = gameState;
-        this.hasChanged = false;
     }
 
     handle(input, client) {
@@ -27,6 +26,6 @@ module.exports = class InputHandler {
                 break;
         }
 
-        this.hasChanged = true;
+        player.positionChanged = true;
     }
 };

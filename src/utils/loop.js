@@ -1,24 +1,22 @@
-const hrtimeMs = function() {
-    let time = process.hrtime();
-    return time[0] * 1000 + time[1] / 1000000
-};
+const timeUtils = require('./time');
 
 module.exports = class Loop {
     constructor(func, frameRate) {
-        this._lastTimestamp = Date.now();
-        this._frameRate = frameRate;
+        this.lastTimestamp = timeUtils.hrtimeMs();
+        this.frameRate = frameRate;
         this.func = func;
+        this.lastFrame = 0;
     }
 
     start() {
-        let now = Date.now();
-        let deltaTime = now - this._lastTimestamp;
+        let now = timeUtils.hrtimeMs();
+        this.lastTimestamp = this.lastTimestamp || now;
+        let currentFrame = Math.round((now - this.lastTimestamp) / this.frameRate);
+        let deltaTime = (currentFrame - this.lastFrame) * this.frameRate;
 
-        if(deltaTime > this._frameRate) {
-            this.func(deltaTime);
-            this._lastTimestamp = now;
-        }
+        deltaTime && this.func(deltaTime);
 
-        setTimeout(() => this.start(), this._frameRate);
+        this.lastFrame = currentFrame;
+        setTimeout(() => this.start(), this.frameRate);
     }
 };

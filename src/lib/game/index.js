@@ -1,10 +1,11 @@
-const config = require('../../config');
+const commonConfig = require('../../../../client/src/game/common_config');
 const Loop = require('../../utils/loop');
 const GameState = require('../../../../client/src/game/engine/game_state');
 const Physics = require('../../../../client/src/game/engine/physics');
 const InputHandler = require('./input_handler');
 const _ = require('lodash');
-const FRAME_RATE = Math.round(1000 / config.fps);
+const FRAME_RATE = Math.round(1000 / commonConfig.fps);
+const timeUtils = require('../../utils/time');
 
 module.exports = class Game {
     constructor(level, clients) {
@@ -12,8 +13,7 @@ module.exports = class Game {
         this.physics = new Physics(this.gameState);
         this.inputHandler = new InputHandler(this.gameState);
         this.clients = clients;
-        this.gameTime = 0;
-        this.startTime = Date.now();
+        this.startTime = timeUtils.hrtimeMs();
     }
 
     start() {
@@ -21,6 +21,9 @@ module.exports = class Game {
             client.on('message.INPUT', input => this.inputHandler.handle(input, client));
             client.on('close', () => this._removeClient(client));
         });
+
+        let networkLoop = new Loop(this._networkLoop.bind(this), 1);
+        networkLoop.start();
 
         let physicsLoop = new Loop(this._physicsLoop.bind(this), FRAME_RATE);
         physicsLoop.start();
@@ -30,25 +33,26 @@ module.exports = class Game {
         let deltaFrames = deltaTime / FRAME_RATE;
         while (deltaFrames > 0) {
             if (deltaFrames >= 1) {
-                this.gameTime += FRAME_RATE;
-                this.physics.update(1, this.gameTime);
+                this.physics.update(1);
             } else {
-                this.gameTime += deltaFrames * FRAME_RATE;
-                this.physics.update(deltaFrames, this.gameTime);
+                this.physics.update(deltaFrames);
             }
             deltaFrames--;
         }
-
-        this._networkLoop();
     }
 
     _networkLoop() {
-        if (this.inputHandler.hasChanged) {
-            let sharedState = this.gameState.getSharedState(this.gameTime);
-            sharedState.gameTime = Date.now() - this.startTime;
-            this.clients.forEach(client => client.send('SHARED_STATE', sharedState));
-            this.inputHandler.hasChanged = false;
-        }
+        let shouldUpdate = this.gameState.players.filter(player => player.positionChanged).length;
+        if(!shouldUpdate)
+            return;
+
+        let sharedState = {
+            time: timeUtils.hrtimeMs() - this.startTime,
+            players: this.gameState.players.map(player => player.getSharedState())
+        };
+
+        this.clients.forEach(client => client.send('SHARED_STATE', sharedState));
+        this.gameState.players.forEach(player => player.positionChanged = false);
     }
 
     _removeClient(client) {

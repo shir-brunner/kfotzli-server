@@ -24,5 +24,5 @@ wsServer.on('request', request => {
 
 console.logCopy = console.log.bind(console);
 console.log = function () {
-    this.logCopy(moment().format('YYYY-MM-DD HH:mm:ss') + ':', ...arguments);
+    this.logCopy(Date.now() + ':', ...arguments);
 };
