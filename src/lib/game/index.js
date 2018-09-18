@@ -41,7 +41,6 @@ module.exports = class Game {
             return;
 
         let sharedState = {
-            time: timeUtils.hrtimeMs() - this.startTime,
             players: this.gameState.players.map(player => player.getSharedState())
         };
 

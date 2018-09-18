@@ -26,7 +26,7 @@ module.exports = class InputHandler {
                 break;
         }
 
-        player.lastInputId = input.id;
+        player.lastProcessedFrame = input.frame;
         player.positionChanged = true;
     }
 };
