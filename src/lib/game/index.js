@@ -5,12 +5,13 @@ const Physics = require('../../../../client/src/game/engine/physics');
 const InputHandler = require('./input_handler');
 const _ = require('lodash');
 const FRAME_RATE = Math.round(1000 / commonConfig.fps);
-const timeUtils = require('../../utils/time');
+const EventsProcessor = require('../../../../client/src/game/engine/events/events_processor');
 
 module.exports = class Game {
     constructor(level, clients) {
         this.world = World.create(level, clients.map(client => client.toObject()));
         this.inputHandler = new InputHandler(this.world);
+        this.eventsProcessor = new EventsProcessor(this.world);
         this.clients = clients;
     }
 
@@ -29,17 +30,21 @@ module.exports = class Game {
 
     _physicsLoop(deltaTime) {
         let deltaFrames = deltaTime / FRAME_RATE;
-        for (let frame = 1; frame <= deltaFrames; frame++)
-            this.world.physics.update(1);
+        for (let frame = 1; frame <= deltaFrames; frame++) {
+            this.world.update(1);
+            if (this.world.worldEvents.events.length) {
+                this.eventsProcessor.process(this.world.worldEvents.events);
+                this.clients.forEach(client => client.send('EVENTS', this.world.worldEvents.events));
+            }
+        }
     }
 
     _networkLoop() {
-        let shouldUpdate = this.world.players.filter(player => player.positionChanged).length;
-        if (!shouldUpdate)
+        let shouldSend = this.world.players.filter(player => player.positionChanged).length;
+        if (!shouldSend)
             return;
 
         let sharedState = { players: this.world.players.map(player => player.getSharedState()) };
-
         this.clients.forEach(client => client.send('SHARED_STATE', sharedState));
         this.world.players.forEach(player => player.positionChanged = false);
     }

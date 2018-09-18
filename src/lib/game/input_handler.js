@@ -10,6 +10,8 @@ module.exports = class InputHandler {
 
     handle(input, client) {
         let player = this.world.players.find(player => player.id === client.id);
+        if (player.isDead)
+            return;
 
         switch(input.keyCode) {
             case LEFT_KEY:
