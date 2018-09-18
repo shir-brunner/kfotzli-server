@@ -31,7 +31,7 @@ module.exports = class Game {
 
     _physicsLoop(deltaTime) {
         let deltaFrames = deltaTime / FRAME_RATE;
-        for (let frame = deltaFrames; frame > 0; frame--)
+        for (let frame = 1; frame <= deltaFrames; frame++)
             this.physics.update(1);
     }
 
