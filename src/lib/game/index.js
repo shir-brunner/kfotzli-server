@@ -1,7 +1,6 @@
 const commonConfig = require('../../../../client/src/game/common_config');
 const Loop = require('../../utils/loop');
 const World = require('../../../../client/src/game/engine/world');
-const Physics = require('../../../../client/src/game/engine/physics');
 const InputHandler = require('./input_handler');
 const _ = require('lodash');
 const FRAME_RATE = Math.round(1000 / commonConfig.fps);
@@ -32,9 +31,11 @@ module.exports = class Game {
         let deltaFrames = deltaTime / FRAME_RATE;
         for (let frame = 1; frame <= deltaFrames; frame++) {
             this.world.update(1);
-            if (this.world.worldEvents.events.length) {
-                this.eventsProcessor.process(this.world.worldEvents.events);
-                this.clients.forEach(client => client.send('EVENTS', this.world.worldEvents.events));
+            let events = this.world.worldEvents.collectEvents();
+            if (events.length) {
+                this.eventsProcessor.process(events);
+                this.clients.forEach(client => client.send('EVENTS', events));
+                this._sendSharedState();
             }
         }
     }
@@ -44,9 +45,13 @@ module.exports = class Game {
         if (!shouldSend)
             return;
 
+        this._sendSharedState();
+        this.world.players.forEach(player => player.positionChanged = false);
+    }
+
+    _sendSharedState() {
         let sharedState = { players: this.world.players.map(player => player.getSharedState()) };
         this.clients.forEach(client => client.send('SHARED_STATE', sharedState));
-        this.world.players.forEach(player => player.positionChanged = false);
     }
 
     _removeClient(client) {
