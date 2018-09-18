@@ -5,6 +5,6 @@ module.exports = {
     levelEditorUrl: 'http://localhost:4000',
     roomTimeout: ms('0.5 seconds'),
     debug: {
-        latency: 10,
+        latency: 15,
     }
 };

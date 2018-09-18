@@ -4,12 +4,12 @@ const UP_KEY = 38;
 const DOWN_KEY = 40;
 
 module.exports = class InputHandler {
-    constructor(gameState) {
-        this.gameState = gameState;
+    constructor(world) {
+        this.world = world;
     }
 
     handle(input, client) {
-        let player = this.gameState.players.find(player => player.id === client.id);
+        let player = this.world.players.find(player => player.id === client.id);
 
         switch(input.keyCode) {
             case LEFT_KEY:

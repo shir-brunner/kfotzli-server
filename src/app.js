@@ -4,7 +4,6 @@ const config = require('./config');
 const reception = require('./lib/matchmaker/reception');
 const Client = require('./lib/matchmaker/client');
 const _ = require('lodash');
-const moment = require('moment');
 
 let httpServer = http.createServer((request, response) => {
 });

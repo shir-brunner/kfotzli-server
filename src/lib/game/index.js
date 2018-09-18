@@ -1,6 +1,6 @@
 const commonConfig = require('../../../../client/src/game/common_config');
 const Loop = require('../../utils/loop');
-const GameState = require('../../../../client/src/game/engine/game_state');
+const World = require('../../../../client/src/game/engine/world');
 const Physics = require('../../../../client/src/game/engine/physics');
 const InputHandler = require('./input_handler');
 const _ = require('lodash');
@@ -9,11 +9,9 @@ const timeUtils = require('../../utils/time');
 
 module.exports = class Game {
     constructor(level, clients) {
-        this.gameState = GameState.create(level, clients.map(client => client.toObject()));
-        this.physics = new Physics(this.gameState);
-        this.inputHandler = new InputHandler(this.gameState);
+        this.world = World.create(level, clients.map(client => client.toObject()));
+        this.inputHandler = new InputHandler(this.world);
         this.clients = clients;
-        this.startTime = timeUtils.hrtimeMs();
     }
 
     start() {
@@ -32,20 +30,18 @@ module.exports = class Game {
     _physicsLoop(deltaTime) {
         let deltaFrames = deltaTime / FRAME_RATE;
         for (let frame = 1; frame <= deltaFrames; frame++)
-            this.physics.update(1);
+            this.world.physics.update(1);
     }
 
     _networkLoop() {
-        let shouldUpdate = this.gameState.players.filter(player => player.positionChanged).length;
-        if(!shouldUpdate)
+        let shouldUpdate = this.world.players.filter(player => player.positionChanged).length;
+        if (!shouldUpdate)
             return;
 
-        let sharedState = {
-            players: this.gameState.players.map(player => player.getSharedState())
-        };
+        let sharedState = { players: this.world.players.map(player => player.getSharedState()) };
 
         this.clients.forEach(client => client.send('SHARED_STATE', sharedState));
-        this.gameState.players.forEach(player => player.positionChanged = false);
+        this.world.players.forEach(player => player.positionChanged = false);
     }
 
     _removeClient(client) {
