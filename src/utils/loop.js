@@ -14,7 +14,7 @@ module.exports = class Loop {
         let currentFrame = Math.round((now - this.lastTimestamp) / this.frameRate);
         let deltaTime = (currentFrame - this.lastFrame) * this.frameRate;
 
-        deltaTime && this.func(deltaTime);
+        deltaTime && this.func(deltaTime, currentFrame);
 
         this.lastFrame = currentFrame;
         setTimeout(() => this.start(), this.frameRate);

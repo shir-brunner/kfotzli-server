@@ -27,10 +27,10 @@ module.exports = class Game {
         physicsLoop.start();
     }
 
-    _physicsLoop(deltaTime) {
+    _physicsLoop(deltaTime, currentFrame) {
         let deltaFrames = deltaTime / FRAME_RATE;
         for (let frame = 1; frame <= deltaFrames; frame++) {
-            this.world.update(1);
+            this.world.update(1, currentFrame);
             let events = this.world.worldEvents.collectEvents();
             if (events.length) {
                 this.eventsProcessor.process(events);
