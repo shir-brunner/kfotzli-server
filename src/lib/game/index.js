@@ -20,9 +20,6 @@ module.exports = class Game {
             client.on('close', () => this._removeClient(client));
         });
 
-        let networkLoop = new Loop(this._networkLoop.bind(this), 1);
-        networkLoop.start();
-
         let physicsLoop = new Loop(this._physicsLoop.bind(this), FRAME_RATE);
         physicsLoop.start();
     }
@@ -38,6 +35,8 @@ module.exports = class Game {
                 this._sendSharedState();
             }
         }
+
+        this._networkLoop(); //must be here so "lastProcessedFrame" is correct
     }
 
     _networkLoop() {
