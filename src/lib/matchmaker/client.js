@@ -13,7 +13,7 @@ module.exports = class Client {
         this._messageHandlers = {};
         this._connection.on('message', params => {
             if(config.debug.latency)
-                setTimeout(() => this._handleMessage(params), config.debug.latency);
+                setTimeout(() => this._handleMessage(params), config.debug.latency === 'random' ? _.random(10, 200) : config.debug.latency);
             else
                 this._handleMessage(params);
         });
@@ -46,7 +46,7 @@ module.exports = class Client {
 
     send(messageType, data) {
         if(config.debug.latency)
-            setTimeout(() => this._send(messageType, data), config.debug.latency);
+            setTimeout(() => this._send(messageType, data), config.debug.latency === 'random' ? _.random(10, 200) : config.debug.latency);
         else
             this._send(messageType, data);
 
