@@ -12,8 +12,6 @@ module.exports = class Game {
         this.inputHandler = new InputHandler(this.world);
         this.eventsProcessor = new EventsProcessor(this.world);
         this.clients = clients;
-        this.inputsToApply = [];
-
     }
 
     start() {

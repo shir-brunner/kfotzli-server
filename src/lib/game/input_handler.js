@@ -13,12 +13,10 @@ module.exports = class InputHandler {
         let player = this.world.players.find(player => player.id === client.id);
         input.player = player;
         this.inputsToApply.push(input);
-        console.log('RECEIVED INPUT FOR CLIENT FRAME = ' + input.frame + ' WHICH IS ' + (input.isPressed ? 'KEY DOWN' : 'KEY UP'));
     }
 
     applyInputs() {
         this.inputsToApply.forEach(input => {
-            console.log('APPLYING INPUT FOR CLIENT FRAME = ' + input.frame + ' WHICH IS ' + (input.isPressed ? 'KEY DOWN' : 'KEY UP'));
             let player = input.player;
             if (player.isDead)
                 return;
