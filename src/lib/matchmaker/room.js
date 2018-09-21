@@ -99,7 +99,6 @@ module.exports = class Room {
         this._syncClients('PREPARE');
 
         this._clients.forEach(client => {
-            client.on('message.PING', () => client.send('PONG'));
             client.on('message.READY', () => {
                 client.isReady = true;
                 if (_.every(this._clients, client => client.isReady))

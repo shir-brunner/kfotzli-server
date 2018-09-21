@@ -2,9 +2,9 @@ const commonConfig = require('../../../../client/src/game/common_config');
 const Loop = require('../../utils/loop');
 const World = require('../../../../client/src/game/engine/world');
 const InputHandler = require('./input_handler');
+const EventsProcessor = require('../../../../client/src/game/engine/events/events_processor');
 const _ = require('lodash');
 const FRAME_RATE = Math.round(1000 / commonConfig.fps);
-const EventsProcessor = require('../../../../client/src/game/engine/events/events_processor');
 
 module.exports = class Game {
     constructor(level, clients) {
@@ -12,6 +12,8 @@ module.exports = class Game {
         this.inputHandler = new InputHandler(this.world);
         this.eventsProcessor = new EventsProcessor(this.world);
         this.clients = clients;
+        this.inputsToApply = [];
+
     }
 
     start() {
@@ -20,26 +22,30 @@ module.exports = class Game {
             client.on('close', () => this._removeClient(client));
         });
 
-        let physicsLoop = new Loop(this._physicsLoop.bind(this), FRAME_RATE);
-        physicsLoop.start();
+        let loop = new Loop(this._loop.bind(this), FRAME_RATE);
+        loop.start();
     }
 
-    _physicsLoop(deltaTime, currentFrame) {
+    _loop(deltaTime, currentFrame) {
         let deltaFrames = deltaTime / FRAME_RATE;
-        for (let frame = 1; frame <= deltaFrames; frame++) {
-            this.world.update(1, currentFrame);
-            let events = this.world.worldEvents.collectEvents();
-            if (events.length) {
-                this.eventsProcessor.process(events);
-                this.clients.forEach(client => client.send('EVENTS', events));
-                this._sendSharedState();
-            }
+        for (let frame = deltaFrames; frame >= 1; frame--) {
+            this._update(currentFrame - frame);
         }
-
-        this._networkLoop(); //must be here so "lastProcessedFrame" is correct
     }
 
-    _networkLoop() {
+    _update(currentFrame) {
+        this.inputHandler.applyInputs();
+        this.world.update(1, currentFrame);
+        this._sendSharedStateIfChanged();
+        let events = this.world.worldEvents.collectEvents();
+        if (events.length) {
+            this.eventsProcessor.process(events);
+            this.clients.forEach(client => client.send('EVENTS', events));
+            this._sendSharedState();
+        }
+    }
+
+    _sendSharedStateIfChanged() {
         let shouldSend = this.world.players.filter(player => player.positionChanged).length;
         if (!shouldSend)
             return;

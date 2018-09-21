@@ -8,7 +8,7 @@ const _ = require('lodash');
 let httpServer = http.createServer((request, response) => {
 });
 httpServer.listen(config.port, () => {
-    console.log(`KfotzLi socket server is listening on port ${config.port}`);
+    console.log(`KfotzLi socket server is listening on port ${config.port}, DEBUG LATENCY = ${process.env.DEBUG_LATENCY || 0}`);
 });
 
 let wsServer = new WebSocketServer({ httpServer: httpServer });
@@ -20,8 +20,3 @@ wsServer.on('request', request => {
         reception.findRoom(client);
     });
 });
-
-console.logCopy = console.log.bind(console);
-console.log = function () {
-    this.logCopy(Date.now() + ':', ...arguments);
-};
