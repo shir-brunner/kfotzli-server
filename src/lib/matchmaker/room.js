@@ -11,6 +11,9 @@ module.exports = class Room {
         this._roomTimeout = config.roomTimeout;
         this._isAvailable = true;
         this._gameStarted = false;
+        this._slots = this._level.spawnPoints.map((spawnPoint, index) => {
+            return { team: spawnPoint.team, number: index + 1, takenBy: null };
+        });
     }
 
     addClient(client) {
@@ -21,7 +24,7 @@ module.exports = class Room {
         this._assignCharacter(client);
         this._clients.push(client);
 
-        console.log(`Client "${client.name}" joined the room at slot ${client.slot}`);
+        console.log(`Client "${client.name}" joined the room and will be playing for team "${client.team}"`);
 
         this._extendTimeout();
         this._syncClients();
@@ -51,31 +54,9 @@ module.exports = class Room {
         return _.cloneDeep({
             level: this._level,
             clients: this._clients.map(client => client.toObject()),
+            slots: this._slots,
             roomTimeout: this._roomTimeout
         });
-    }
-
-    _assignSlotAndTeam(client) {
-        if (this._level.teams.length) {
-            let smallestTeam = this._getSmallestTeam();
-            client.team = smallestTeam;
-            for (let slot = 1; slot <= this._level.spawnPoints.length; slot++) {
-                let spawnPoint = this._level.spawnPoints[slot - 1];
-                let isSlotAvailable = !this._clients.find(client => client.slot === slot);
-                if(spawnPoint.team === smallestTeam && isSlotAvailable) {
-                    client.slot = slot;
-                    break;
-                }
-            }
-        } else {
-            let availableSlots = [];
-            for (let slot = 1; slot <= this._level.spawnPoints.length; slot++) {
-                let isSlotAvailable = !this._clients.find(client => client.slot === slot);
-                isSlotAvailable && availableSlots.push(slot);
-            }
-
-            client.slot = _.sample(availableSlots);
-        }
     }
 
     _assignCharacter(client) {
@@ -136,25 +117,41 @@ module.exports = class Room {
         game.start();
     }
 
-    _getSmallestTeam() {
-        let slotsByTeam = this._getSlotsByTeam();
-        let smallestTeam = null;
-        this._level.teams.forEach(team => {
-            if(!smallestTeam)
-                smallestTeam = team;
-            else if(slotsByTeam[team].length < slotsByTeam[smallestTeam].length) {
-                smallestTeam = team;
-            }
-        });
-
-        return smallestTeam || _.sample(this._level.teams);
+    _assignSlotAndTeam(client) {
+        if (this._level.teams.length) {
+            let smallestTeam = this._getAvailableTeamWithLeastClients();
+            let slot = _.sample(this._slots.filter(slot => slot.team === smallestTeam && !slot.takenBy));
+            slot.takenBy = client.id;
+            client.team = slot.team;
+        } else {
+            let slot = _.sample(this._slots.filter(slot => !slot.takenBy));
+            slot.takenBy = client.id;
+        }
     }
 
-    _getSlotsByTeam() {
-        let slotsByTeam = {};
+    _getAvailableTeamWithLeastClients() {
+        let clientsByTeam = this._getClientsByTeam();
+        let smallestTeam = null;
+
         this._level.teams.forEach(team => {
-            slotsByTeam[team] = this._clients.filter(client => client.team === team).map(client => client.slot);
+            if (!smallestTeam)
+                smallestTeam = team;
+            else if (clientsByTeam[team].length < clientsByTeam[smallestTeam].length && this._canJoinTeam(team))
+                smallestTeam = team;
         });
-        return slotsByTeam;
+
+        return smallestTeam;
+    }
+
+    _canJoinTeam(team) {
+        return this._slots.find(slot => slot.team === team && !slot.takenBy);
+    }
+
+    _getClientsByTeam() {
+        let clientsByTeam = {};
+        this._level.teams.forEach(team => {
+            clientsByTeam[team] = this._clients.filter(client => client.team === team);
+        });
+        return clientsByTeam;
     }
 };

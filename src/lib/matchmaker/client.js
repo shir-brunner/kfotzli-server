@@ -7,7 +7,6 @@ module.exports = class Client {
         this.id = uuid();
         this.name = null;
         this.character = null;
-        this.slot = null;
         this.team = null;
 
         this._connection = connection;
@@ -62,6 +61,6 @@ module.exports = class Client {
     }
 
     toObject() {
-        return _.pick(this, ['id', 'name', 'character', 'slot', 'team']);
+        return _.pick(this, ['id', 'name', 'character', 'team']);
     }
 };
