@@ -78,6 +78,11 @@ module.exports = class Room {
             return;
 
         this._clients = this._clients.filter(roomClient => roomClient.id !== client.id);
+        this._slots.forEach(slot => {
+            if(slot.takenBy === client.id)
+                slot.takenBy = null;
+        });
+
         this._extendTimeout();
         this._syncClients();
     }
