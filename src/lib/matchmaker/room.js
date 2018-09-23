@@ -24,7 +24,7 @@ module.exports = class Room {
         this._assignCharacter(client);
         this._clients.push(client);
 
-        console.log(`Client "${client.name}" joined the room and will be playing for team "${client.team}"`);
+        console.log(`Client "${client.name}" joined the room`);
 
         this._extendTimeout();
         this._syncClients();

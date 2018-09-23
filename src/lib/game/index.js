@@ -3,6 +3,7 @@ const Loop = require('../../utils/loop');
 const World = require('../../../../client/src/game/engine/world');
 const InputHandler = require('./input_handler');
 const EventsProcessor = require('../../../../client/src/game/engine/events/events_processor');
+const GameplayFactory = require('../../../../client/src/game/gameplay/gameplay_factory');
 const _ = require('lodash');
 const FRAME_RATE = Math.round(1000 / commonConfig.fps);
 
@@ -11,6 +12,7 @@ module.exports = class Game {
         this.world = World.create(level, clients.map(client => client.toObject()));
         this.inputHandler = new InputHandler(this.world);
         this.eventsProcessor = new EventsProcessor(this.world);
+        this.gameplay = (new GameplayFactory()).getGameplay(this.world);
         this.clients = clients;
     }
 
@@ -38,6 +40,7 @@ module.exports = class Game {
         let events = this.world.worldEvents.collectEvents();
         if (events.length) {
             this.eventsProcessor.process(events);
+            this.gameplay.update(events);
             this.clients.forEach(client => client.send('EVENTS', events));
             this._sendSharedState();
         }
