@@ -74,14 +74,14 @@ module.exports = class Room {
     }
 
     removeClient(client) {
-        if (this._gameStarted)
-            return;
-
         this._clients = this._clients.filter(roomClient => roomClient.id !== client.id);
         this._slots.forEach(slot => {
             if(slot.takenBy === client.id)
                 slot.takenBy = null;
         });
+
+        if (this._gameStarted)
+            return;
 
         this._extendTimeout();
         this._syncClients();

@@ -19,11 +19,11 @@ module.exports = class Game {
     start() {
         this.clients.forEach(client => {
             client.on('message.INPUT', input => this.inputHandler.handle(input, client));
-            client.on('close', () => this._removeClient(client));
+            client.on('close', () => this._onClientLeft(client));
         });
 
-        let loop = new Loop(this._loop.bind(this), FRAME_RATE);
-        loop.start();
+        this.loop = new Loop(this._loop.bind(this), FRAME_RATE);
+        this.loop.start();
     }
 
     _loop(deltaTime, currentFrame) {
@@ -60,7 +60,13 @@ module.exports = class Game {
         this.clients.forEach(client => client.send('SHARED_STATE', sharedState));
     }
 
-    _removeClient(client) {
-        console.log('TODO: remove client "' + client.name + '" from game because he left');
+    _onClientLeft(clientToRemove) {
+        this.clients = this.clients.filter(client => client.id !== clientToRemove.id);
+        this.world.worldEvents.addEvent('PLAYER_LEFT', { playerId: clientToRemove.id });
+
+        if(!this.clients.length) {
+            console.log('Game has been stopped because all clients left');
+            this.loop.stop();
+        }
     }
 };
