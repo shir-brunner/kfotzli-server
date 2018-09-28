@@ -21,7 +21,7 @@ module.exports = class InputHandler {
             if (player.isDead)
                 return;
 
-            switch(input.keyCode) {
+            switch (input.keyCode) {
                 case LEFT_KEY:
                     player.controller.isLeftPressed = input.isPressed;
                     break;
@@ -36,10 +36,24 @@ module.exports = class InputHandler {
                     break;
             }
 
+            this._smoothCorrection(input);
+
             player.lastProcessedFrame = input.frame;
             player.positionChanged = true;
         });
 
         this.inputsToApply = [];
+    }
+
+    _smoothCorrection(input) {
+        let player = input.player;
+        let clientPosition = input.position;
+        let diffX = Math.abs(player.x - clientPosition.x);
+        let diffY = Math.abs(player.y - clientPosition.y);
+        if(diffX <= input.player.speed)
+            player.x = clientPosition.x;
+        if(diffY <= input.player.speed)
+            player.y = clientPosition.y;
+        player.verticalSpeed = clientPosition.verticalSpeed;
     }
 };
