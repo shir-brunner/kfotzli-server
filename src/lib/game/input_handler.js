@@ -50,9 +50,10 @@ module.exports = class InputHandler {
         let clientPosition = input.position;
         let diffX = Math.abs(player.x - clientPosition.x);
         let diffY = Math.abs(player.y - clientPosition.y);
-        if(diffX <= input.player.speed)
+        //TODO: find a better solution
+        if(diffX <= (input.player.speed * 5))
             player.x = clientPosition.x;
-        if(diffY <= input.player.speed)
+        if(diffY <= (input.player.speed * 5))
             player.y = clientPosition.y;
         player.verticalSpeed = clientPosition.verticalSpeed;
     }
