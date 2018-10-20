@@ -3,7 +3,7 @@ const axios = require('axios');
 
 class LevelEditor {
     getLevels() {
-        return axios.get(config.levelEditorUrl + '/levels').then(response => response.data);
+        return axios.get(config.levelEditorUrl + '/levels?published=true').then(response => response.data);
     }
 
     getCharacters() {
